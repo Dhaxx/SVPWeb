@@ -1,0 +1,31 @@
+# Arquivos binários compilados
+/bin/
+/out/
+
+# Arquivos do Go que não devem ser versionados
+*.exe
+*.test
+*.prof
+*.out
+*.mod
+*.sum
+
+# Arquivos de dependência do Go
+/vendor/
+
+# Arquivos de cache do Go
+.go/pkg/
+/.go/bin/
+
+# IDEs e editores
+.idea/
+.vscode/
+*.iml
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de configuração específicos de ferramentas
+*.log
+*.env
