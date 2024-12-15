@@ -11,3 +11,8 @@ type Notice struct {
 	Type uint `Json:"type"`
 	Path string `Json:"path"`
 }
+
+type NoticeType struct {
+	ID int `Json:"id"`
+	Name string `Json:"name"`
+}
