@@ -2,22 +2,31 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
+	"SVPWeb/internal/database"
 	"database/sql"
 	"fmt"
 )
 
-func CreateSystem(db *sql.DB, sys models.System) error {
+type SystemRepository struct {
+	DB *sql.DB
+}
+
+func NewSystemRepository(*sql.DB) *SystemRepository {
+	return &SystemRepository{DB: database.GetDB()}
+} 
+
+func (cnx *SystemRepository)CreateSystem(sys models.System) error {
 	query := "INSERT INTO SISTEMAS (nome, obs) VALUES ?, ?"
-	_, err := db.Exec(query, sys.Name, sys.Obs)
+	_, err := cnx.DB.Exec(query, sys.Name, sys.Obs)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir tipo de sistema %v", err)
 	}
 	return nil
 }
 
-func GetAllSystems(db *sql.DB) ([]models.System, error) {
+func (cnx *SystemRepository)GetAllSystems() ([]models.System, error) {
 	query := "SELECT ID, NOME, OBS FROM SISTEMAS"
-	rows, err := db.Query(query)
+	rows, err := cnx.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao buscar todos os sistemas: %v", err)
 	}
@@ -34,9 +43,9 @@ func GetAllSystems(db *sql.DB) ([]models.System, error) {
 	return systems, nil
 }
 
-func GetSystemByID(db *sql.DB, id uint) (*models.System, error) {
+func (cnx *SystemRepository) GetSystemByID(id uint) (*models.System, error) {
 	query := "SELECT ID, NOME, OBS FROM SISTEMAS WHERE ID = ?"
-	rows, err := db.Query(query, id)
+	rows, err := cnx.DB.Query(query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("erro ao buscar o sistema com ID: %d", id)
@@ -54,10 +63,10 @@ func GetSystemByID(db *sql.DB, id uint) (*models.System, error) {
 	return &system, nil
 }
 
-func UpdateSystem(db *sql.DB, sistema models.System) error {
+func (cnx *SystemRepository) UpdateSystem(sistema models.System) error {
 	query := "UPDATE SISTEMAS SET NOME = ?, OBS = ? WHERE ID = ?"
 
-	result, err := db.Exec(query, sistema.Name, sistema.Obs, sistema.ID)
+	result, err := cnx.DB.Exec(query, sistema.Name, sistema.Obs, sistema.ID)
 	if err != nil {
 		return fmt.Errorf("erro ao atualizar sistema: %v", err)
 	}
@@ -74,14 +83,14 @@ func UpdateSystem(db *sql.DB, sistema models.System) error {
 	return nil
 }
 
-func DeleteSystem(db *sql.DB, sistema models.System) error {
+func (cnx *SystemRepository) DeleteSystem(sistema models.System) error {
 	query := "DELETE FROM SISTEMAS WHERE ID = ?"
 
-	result, err := db.Exec(query, sistema.ID)
+	result, err := cnx.DB.Exec(query, sistema.ID)
 	if err != nil {
 		return fmt.Errorf("erro ao executar delete de sistema")
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("erro ao retornar linhas afetadas: %v", err)
@@ -90,6 +99,6 @@ func DeleteSystem(db *sql.DB, sistema models.System) error {
 	if rowsAffected == 0 {
 		return fmt.Errorf("nenhum sistema com id: %d localizado", sistema.ID)
 	}
-	
+
 	return nil
 }

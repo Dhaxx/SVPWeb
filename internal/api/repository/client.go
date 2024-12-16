@@ -2,24 +2,33 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
+	"SVPWeb/internal/database"
 	"database/sql"
 	"fmt"
 )
 
-func CreateClient(db *sql.DB, client models.Client) error {
+type ClientRepository struct {
+	DB *sql.DB
+}
+
+func NewClientRepository(db *sql.DB) *ClientRepository {
+	return &ClientRepository{DB: database.GetDB()}
+}
+
+func (cnx *ClientRepository) CreateClient(client models.Client) error {
 	query := "INSERT INTO CLIENTE (ENTIDADE, CIDADE, UF, TELEFONE, EMAIL) VALUES (?, ?, ?, ?, ?)"
 
-	_, err := db.Exec(query, client.Entity, client.City, client.Uf, client.Tel, client.Email)
+	_, err := cnx.DB.Exec(query, client.Entity, client.City, client.Uf, client.Tel, client.Email)
 	if err != nil {
 		return fmt.Errorf("erro ao criar cliente: %v", err)
 	}
 	return nil
 }
 
-func GetAllClients(db *sql.DB) ([]models.Client, error) {
+func (cnx *ClientRepository) GetAllClients() ([]models.Client, error) {
 	query := "SELECT id, entidade, cidade, uf, telefone, email FROM CLIENTE"
 
-	rows, err := db.Query(query)
+	rows, err := cnx.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao obter todos os clientes: %v", err)
 	}
@@ -36,10 +45,10 @@ func GetAllClients(db *sql.DB) ([]models.Client, error) {
 	return clientes, nil
 }
 
-func GetClientById(db *sql.DB, id uint) (*models.Client, error) {
+func (cnx *ClientRepository) GetClientById(id uint) (*models.Client, error) {
 	query := "SELECT id, entidade, cidade, uf, telefone, email FROM CLIENTE WHERE ID = ?"
 
-	rows, err := db.Query(query, id)
+	rows, err := cnx.DB.Query(query, id)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("erro ao localizar cliente com ID: %d", id)
 	}
@@ -57,10 +66,10 @@ func GetClientById(db *sql.DB, id uint) (*models.Client, error) {
 	return &cliente, nil
 }
 
-func UpdateClient(db *sql.DB, client models.Client) error {
+func (cnx *ClientRepository) UpdateClient(client models.Client) error {
 	query := "UDPATE CLIENTE SET entidade = ?, cidade = ?, uf = ?, tel = ?, email = ? WHERE id = ?"
 
-	result, err := db.Exec(query, client.Entity, client.City, client.Uf, client.Tel, client.Email)
+	result, err := cnx.DB.Exec(query, client.Entity, client.City, client.Uf, client.Tel, client.Email)
 	if err != nil {
 		return fmt.Errorf("erro ao atualizar cliente: %v", err)
 	}
@@ -77,10 +86,10 @@ func UpdateClient(db *sql.DB, client models.Client) error {
 	return nil
 }
 
-func DeleteClient(db *sql.DB, client models.Client) error {
+func (cnx *ClientRepository) DeleteClient(client models.Client) error {
 	query := "DELETE FROM CLIENTE WHERE ID = ?"
 
-	result, err := db.Exec(query, client.ID)
+	result, err := cnx.DB.Exec(query, client.ID)
 	if err != nil {
 		return fmt.Errorf("erro ao deletar cliente: %v", err)
 	}

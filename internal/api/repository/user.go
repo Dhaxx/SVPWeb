@@ -2,22 +2,31 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
+	"SVPWeb/internal/database"
 	"database/sql"
 	"fmt"
 )
 
-func InsertUser(db *sql.DB, user models.User) error {
+type UserRepository struct {
+	DB *sql.DB
+}
+
+func NewUserRepository(*sql.DB) *UserRepository {
+	return &UserRepository{DB: database.GetDB()}
+}
+
+func (cnx *UserRepository) CreatetUser(user models.User) error {
 	query := "INSERT INTO USUARIO (nome, senha, ativo, sistema, aviso, multi, controle) VALUES (?, ?, ?, ?, ?, ?, ?)"
-	_, err := db.Exec(query, user.Name, user.Password, user.Active, user.System, user.Notice, user.Multi, user.Control)
+	_, err := cnx.DB.Exec(query, user.Name, user.Password, user.Active, user.System, user.Notice, user.Multi, user.Control)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir usuário: %v", err)
 	}
 	return nil
 }
 
-func GetAllUser(db *sql.DB) ([]models.User, error) {
+func (cnx *UserRepository) GetAllUser() ([]models.User, error) {
 	query := "SELECT id, nome, ativo, sistema, aviso, multi, controle FROM USUARIO"
-	rows, err := db.Query(query)
+	rows, err := cnx.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao buscar todos usuários: %v", err)
 	}
@@ -34,9 +43,9 @@ func GetAllUser(db *sql.DB) ([]models.User, error) {
 	return users, nil
 }
 
-func GetUserByID(db *sql.DB, id int) (*models.User, error) {
+func (cnx *UserRepository) GetUserByID(id int) (*models.User, error) {
 	query := "SELECT id, nome, ativo, sistema, aviso, multi, controle FROM USUARIO WHERE ID = ?"
-	rows, err := db.Query(query, id)
+	rows, err := cnx.DB.Query(query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("usuário com ID %d não encontrado", id)
@@ -54,10 +63,10 @@ func GetUserByID(db *sql.DB, id int) (*models.User, error) {
 	return &user, nil
 }
 
-func UpdateUser(db *sql.DB, user models.User) error {
+func (cnx *UserRepository) UpdateUser(user models.User) error {
 	query := "UPDATE USUARIO SET nome = ?, ativo = ?, sistema = ?, multi = ?, controle = ? where id = ?"
 
-	result, err := db.Exec(query, user.Name, user.Active, user.System, user.Multi, user.Control, user.ID)
+	result, err := cnx.DB.Exec(query, user.Name, user.Active, user.System, user.Multi, user.Control, user.ID)
 	if err != nil {
 		return fmt.Errorf("erro ao atualizar usuário: %v", err)
 	}
@@ -74,10 +83,10 @@ func UpdateUser(db *sql.DB, user models.User) error {
 	return nil
 }
 
-func DeleteUser(db *sql.DB, user models.User) error {
+func (cnx *UserRepository) DeleteUser(user models.User) error {
 	query := "DELETE FROM USUARIO WHERE ID = ?"
-	
-	result, err := db.Exec(query, user.ID)
+
+	result, err := cnx.DB.Exec(query, user.ID)
 	if err != nil {
 		return fmt.Errorf("erro ao apagar usuários: %v", err)
 	}
