@@ -7,6 +7,14 @@ import (
 	"fmt"
 )
 
+type UserRepositoryInterface interface {
+	CreateUser(user models.User) error
+	GetAllUser() ([]models.User, error)
+	GetUserByID(id int) (*models.User, error)
+	UpdateUser(user models.User) error
+	DeleteUser(user models.User) error
+}
+
 type UserRepository struct {
 	DB *sql.DB
 }
