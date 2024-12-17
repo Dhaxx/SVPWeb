@@ -4,6 +4,7 @@ import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/api/repository"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -84,3 +85,55 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Método não permitido ", http.StatusMethodNotAllowed)
+	}
+
+	var user models.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Erro ao decodificar JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if user.ID == 0 {
+		http.Error(w, "O ID do usuário é inválido", http.StatusBadRequest)
+		return
+	}
+
+	err := h.Repo.UpdateUser(user)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Erro ao atualizar usuário: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Usuário atualizado com sucesso!"})
+}
+
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Erro ao converter ID: "+id+". erro: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if idInt == 0 {
+		http.Error(w, "O ID do usuário é inválido", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Repo.DeleteUser(uint(idInt)); err != nil {
+		http.Error(w, fmt.Sprintf("Erro ao deletar usuário: %v", err), http.StatusInternalServerError)
+		return
+	} 
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Usuário deletado com sucesso!"})
+}

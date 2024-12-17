@@ -22,17 +22,17 @@ func (r *UserRepositoryMock) CreateUser(user models.User) error {
 func (r *UserRepositoryMock) GetAllUser() ([]models.User, error) {
 	// Simula a obtenção de todos os usuários
 	return []models.User{
-		{ID: 1, Name: "Test User 1", Active: 1},
-		{ID: 2, Name: "Test User 2", Active: 0},
+		{ID: 1, Name: "Test User 1", Active: `S`},
+		{ID: 2, Name: "Test User 2", Active: `N`},
 	}, nil
 }
 
 func (r *UserRepositoryMock) GetUserByID(id int) (*models.User, error) {
 	// Simula o comportamento esperado ao obter um usuário pelo ID
 	if id == 1 {
-		return &models.User{ID: 1, Name: "Test User 1", Active: 1}, nil
+		return &models.User{ID: 1, Name: "Test User 1", Active: "S"}, nil
 	} else if id == 2 {
-		return &models.User{ID: 2, Name: "Test User 2", Active: 0}, nil
+		return &models.User{ID: 2, Name: "Test User 2", Active: "N"}, nil
 	}
 	return nil, fmt.Errorf("usuário com ID %d não encontrado", id)
 }
@@ -45,9 +45,9 @@ func (r *UserRepositoryMock) UpdateUser(user models.User) error {
 	return nil // Simula o sucesso na atualização
 }
 
-func (r *UserRepositoryMock) DeleteUser(user models.User) error {
+func (r *UserRepositoryMock) DeleteUser(id uint) error {
 	// Simula a deleção do usuário
-	if user.ID == 0 {
+	if id == 0 {
 		return fmt.Errorf("usuário não encontrado")
 	}
 	return nil // Simula a exclusão com sucesso

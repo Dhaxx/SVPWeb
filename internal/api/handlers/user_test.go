@@ -8,20 +8,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"context"
 
 	"github.com/go-chi/chi/v5"
 )
-
-type UserRepositoryInterface interface {
-	CreateUser(user models.User) error
-	GetAllUser() ([]models.User, error)
-	GetUserByID(id int) (*models.User, error)
-	UpdateUser(user models.User) error
-	DeleteUser(user models.User) error
-}
 
 func TestCreateUser(t *testing.T) {
 	mockRepo := &repository.UserRepositoryMock{}  // Usando o mock do repositório
@@ -35,13 +29,13 @@ func TestCreateUser(t *testing.T) {
 	user := models.User{
 		Name:     "John Doe",
 		Password: "password123",
-		Active:   '1',
+		Active:   "S",
 		System:   1,
 		Notice:   0,
-		Multi:    '1',
+		Multi:    "N",
 		Control:  1,
 		PassMD5: "somehashedpassword",
-		Cad:      '1',
+		Cad:      "N",
 	}
 
 	var buf bytes.Buffer
@@ -98,6 +92,85 @@ func TestGetUserByID(t *testing.T) {
 
 	// Verificar o corpo da resposta
 	expectedBody := `{"ID":1,"Name":"Test User 1","Active":true}`
+	if rr.Body.String() != expectedBody {
+		t.Errorf("esperado body %s, mas obteve %s", expectedBody, rr.Body.String())
+	}
+}
+
+func TestUpdateUser(t *testing.T) {
+	mockRepo := &repository.UserRepositoryMock{}
+
+	// Instanciar o handler com o mock do repositório
+	handler := &handlers.UserHandler{
+		Repo: mockRepo,
+	}
+
+	body := `{
+		"id": 1,
+		"name": "Test User 1",
+		"active": "S",
+		"system": 2,
+		"multi": "N",
+		"control": 1
+	}`
+
+	// Criar uma requisição simulada para um ID existente
+	req := httptest.NewRequest(http.MethodPut, "/usuarios/1", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Usar chi para injetar o parâmetro "id" na rota
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", "1") // Simula o ID "1" na rota
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	// Criar um ResponseRecorder para capturar a resposta
+	rr := httptest.NewRecorder()
+
+	// Chamar o handler
+	handler.UpdateUser(rr, req)
+
+	// Verifica o status HTTP retornado
+	if rr.Code != http.StatusOK {
+		t.Errorf("esperado status %d, mas obteve %d", http.StatusOK, rr.Code)
+	}
+
+	// Verifica o corpo da resposta
+	expectedBody := `{"message":"Usuário atualizado com sucesso"}`
+	if strings.TrimSpace(rr.Body.String()) != expectedBody {
+		t.Errorf("esperado body %s, mas obteve %s", expectedBody, rr.Body.String())
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	mockRepo := &repository.UserRepositoryMock{}
+
+	// Instanciar o handler com o mock do repositório
+	handler := &handlers.UserHandler{
+		Repo: mockRepo,
+	}
+
+	// Criar uma requisição simulada para um ID existente
+	userID := 1
+	req := httptest.NewRequest(http.MethodDelete, "/usuarios/1", nil)
+	
+	// Usar chi para injetar o parâmetro "id" na rota
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", strconv.Itoa(userID)) // Simula o ID "1" na rota
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	// Criar um ResponseRecorder para capturar a resposta
+	rr := httptest.NewRecorder()
+
+	// Chamar o handler
+	handler.DeleteUser(rr, req)
+
+	// Verificar o status HTTP retornado
+	if rr.Code != http.StatusOK {
+		t.Errorf("esperado status %d, mas obteve %d", http.StatusOK, rr.Code)
+	}
+
+	// Verificar o corpo da resposta
+	expectedBody := `{"message": "Usuário deletado com sucesso!"}`
 	if rr.Body.String() != expectedBody {
 		t.Errorf("esperado body %s, mas obteve %s", expectedBody, rr.Body.String())
 	}

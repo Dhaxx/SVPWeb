@@ -3,6 +3,7 @@ package repository
 import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/database"
+	"SVPWeb/internal/auth"
 	"database/sql"
 	"fmt"
 )
@@ -12,7 +13,7 @@ type UserRepositoryInterface interface {
 	GetAllUser() ([]models.User, error)
 	GetUserByID(id int) (*models.User, error)
 	UpdateUser(user models.User) error
-	DeleteUser(user models.User) error
+	DeleteUser(id uint) error
 }
 
 type UserRepository struct {
@@ -23,9 +24,11 @@ func NewUserRepository(*sql.DB) *UserRepository {
 	return &UserRepository{DB: database.GetDB()}
 }
 
-func (cnx *UserRepository) CreatetUser(user models.User) error {
-	query := "INSERT INTO USUARIO (nome, senha, ativo, sistema, aviso, multi, controle) VALUES (?, ?, ?, ?, ?, ?, ?)"
-	_, err := cnx.DB.Exec(query, user.Name, user.Password, user.Active, user.System, user.Notice, user.Multi, user.Control)
+func (cnx *UserRepository) CreateUser(user models.User) error {
+	query := "INSERT INTO USUARIO (nome, senha, ativo, sistema, aviso, multi, controle, senhamd5) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	salt := auth.GenerateSalt()
+	hashedPass := auth.HashMD5WithSalt(user.Password, salt)
+	_, err := cnx.DB.Exec(query, user.Name, hashedPass, user.Active, user.System, user.Notice, user.Multi, user.Control, salt)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir usuário: %v", err)
 	}
@@ -91,10 +94,10 @@ func (cnx *UserRepository) UpdateUser(user models.User) error {
 	return nil
 }
 
-func (cnx *UserRepository) DeleteUser(user models.User) error {
+func (cnx *UserRepository) DeleteUser(id uint) error {
 	query := "DELETE FROM USUARIO WHERE ID = ?"
 
-	result, err := cnx.DB.Exec(query, user.ID)
+	result, err := cnx.DB.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("erro ao apagar usuários: %v", err)
 	}
@@ -105,7 +108,7 @@ func (cnx *UserRepository) DeleteUser(user models.User) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("nenhum usuário com ID %d encontrado", user.ID)
+		return fmt.Errorf("nenhum usuário com ID %d encontrado", id)
 	}
 
 	return nil
