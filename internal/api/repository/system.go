@@ -7,6 +7,14 @@ import (
 	"fmt"
 )
 
+type SystemRepositoryInterface interface {
+	CreateSystem(models.System) error
+	GetAllSystems() ([]models.System, error)
+	GetSystemByID(id int) (*models.System, error)
+	UpdateSystem(models.System) error
+	DeleteSystem(id int) error
+}
+
 type SystemRepository struct {
 	DB *sql.DB
 }
