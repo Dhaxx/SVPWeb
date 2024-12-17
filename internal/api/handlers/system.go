@@ -25,7 +25,7 @@ func (h *SystemHandler) CreateSystem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var system models.System
-	if err := json.NewDecoder(r.Body).Decode(system); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&system); err != nil {
 		http.Error(w, "Erro ao decodificar JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
