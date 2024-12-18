@@ -5,6 +5,7 @@ import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/api/repository"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +29,7 @@ func TestCreateSystem(t *testing.T) {
 	// Criar um usuário para testar
 	sys := models.System{
 		Name: "STS",
-		Obs: "Sistema de Terceiro Setor",
+		Obs: sql.NullString{String: "Sistema de Terceiro Setor", Valid: false},
 	}
 
 	var buf bytes.Buffer

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
+	"database/sql"
 	"fmt"
 )
 
@@ -22,17 +23,17 @@ func (r *SystemRepositoryMock) CreateSystem(system models.System) error {
 func (r *SystemRepositoryMock) GetAllSystems() ([]models.System, error) {
 	// Simula a obtenção de todos os usuários
 	return []models.System{
-		{ID: 1, Name: "Test System 1", Obs: ``},
-		{ID: 2, Name: "Test System 2", Obs: ``},
+		{ID: 1, Name: "Test System 1", Obs: sql.NullString{String: "", Valid: false}},
+		{ID: 2, Name: "Test System 2", Obs: sql.NullString{String: "", Valid: false}},
 	}, nil
 }
 
 func (r *SystemRepositoryMock) GetSystemByID(id int) (*models.System, error) {
 	// Simula o comportamento esperado ao obter um usuário pelo ID
 	if id == 1 {
-		return &models.System{ID: 1, Name: "Test System 1", Obs: ""}, nil
+		return &models.System{ID: 1, Name: "Test System 1", Obs: sql.NullString{String: "", Valid: false}}, nil
 	} else if id == 2 {
-		return &models.System{ID: 2, Name: "Test System 2", Obs: ""}, nil
+		return &models.System{ID: 2, Name: "Test System 2", Obs: sql.NullString{String: "", Valid: false}}, nil
 	}
 	return nil, fmt.Errorf("usuário com ID %d não encontrado", id)
 }

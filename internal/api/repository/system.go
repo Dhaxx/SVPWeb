@@ -21,10 +21,10 @@ type SystemRepository struct {
 
 func NewSystemRepository(*sql.DB) *SystemRepository {
 	return &SystemRepository{DB: database.GetDB()}
-} 
+}
 
-func (cnx *SystemRepository)CreateSystem(sys models.System) error {
-	query := "INSERT INTO SISTEMAS (nome, obs) VALUES ?, ?"
+func (cnx *SystemRepository) CreateSystem(sys models.System) error {
+	query := "INSERT INTO SISTEMA (nome, obs) VALUES ?, ?"
 	_, err := cnx.DB.Exec(query, sys.Name, sys.Obs)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir tipo de sistema %v", err)
@@ -32,8 +32,8 @@ func (cnx *SystemRepository)CreateSystem(sys models.System) error {
 	return nil
 }
 
-func (cnx *SystemRepository)GetAllSystems() ([]models.System, error) {
-	query := "SELECT ID, NOME, OBS FROM SISTEMAS"
+func (cnx *SystemRepository) GetAllSystems() ([]models.System, error) {
+	query := "SELECT ID, NOME, OBS FROM SISTEMA"
 	rows, err := cnx.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao buscar todos os sistemas: %v", err)
@@ -51,8 +51,8 @@ func (cnx *SystemRepository)GetAllSystems() ([]models.System, error) {
 	return systems, nil
 }
 
-func (cnx *SystemRepository) GetSystemByID(id uint) (*models.System, error) {
-	query := "SELECT ID, NOME, OBS FROM SISTEMAS WHERE ID = ?"
+func (cnx *SystemRepository) GetSystemByID(id int) (*models.System, error) {
+	query := "SELECT ID, NOME, OBS FROM SISTEMA WHERE ID = ?"
 	rows, err := cnx.DB.Query(query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -72,7 +72,7 @@ func (cnx *SystemRepository) GetSystemByID(id uint) (*models.System, error) {
 }
 
 func (cnx *SystemRepository) UpdateSystem(sistema models.System) error {
-	query := "UPDATE SISTEMAS SET NOME = ?, OBS = ? WHERE ID = ?"
+	query := "UPDATE SISTEMA SET NOME = ?, OBS = ? WHERE ID = ?"
 
 	result, err := cnx.DB.Exec(query, sistema.Name, sistema.Obs, sistema.ID)
 	if err != nil {
@@ -91,10 +91,10 @@ func (cnx *SystemRepository) UpdateSystem(sistema models.System) error {
 	return nil
 }
 
-func (cnx *SystemRepository) DeleteSystem(sistema models.System) error {
-	query := "DELETE FROM SISTEMAS WHERE ID = ?"
+func (cnx *SystemRepository) DeleteSystem(ID int) error {
+	query := "DELETE FROM SISTEMA WHERE ID = ?"
 
-	result, err := cnx.DB.Exec(query, sistema.ID)
+	result, err := cnx.DB.Exec(query, ID)
 	if err != nil {
 		return fmt.Errorf("erro ao executar delete de sistema")
 	}
@@ -105,7 +105,7 @@ func (cnx *SystemRepository) DeleteSystem(sistema models.System) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("nenhum sistema com id: %d localizado", sistema.ID)
+		return fmt.Errorf("nenhum sistema com id: %d localizado", ID)
 	}
 
 	return nil
