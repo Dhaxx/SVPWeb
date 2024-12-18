@@ -7,6 +7,14 @@ import (
 	"fmt"
 )
 
+type ServiceRepositoryInterface interface {
+	CreateService(models.Service) error
+	GetAllServices() ([]models.Service, error)
+	GetServiceByID(int) (*models.Service, error)
+	UpdateService(models.Service) error
+	DeleteService(int) error
+}
+
 type ServiceRepository struct {
 	DB *sql.DB
 }
@@ -30,7 +38,7 @@ func (cnx *ServiceRepository)GetAllServices() ([]models.Service, error) {
 	/*2 -- fiorilli
 	0 -- em andamento
 	1 -- finalizado*/
-	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem FROM ATENDIMENTO"
+	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem, sistema, usuario_alteracao, usuario_finalizacao FROM ATENDIMENTO"
 
 	rows, err := cnx.DB.Query(query)
 	if err != nil {
@@ -41,7 +49,7 @@ func (cnx *ServiceRepository)GetAllServices() ([]models.Service, error) {
 	var atendimentos []models.Service
 	for rows.Next() {
 		var atendimento models.Service
-		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin); err != nil {
+		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin, &atendimento.System, &atendimento.UserAlteration, &atendimento.UserFinished); err != nil {
 			return nil, fmt.Errorf("erro ao scanear atendimentos: %v", err)
 		}
 		atendimentos = append(atendimentos, atendimento)
@@ -49,8 +57,8 @@ func (cnx *ServiceRepository)GetAllServices() ([]models.Service, error) {
 	return atendimentos, nil
 }
 
-func (cnx *ServiceRepository) GetServiceById(id uint) (*models.Service, error) {
-	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem FROM ATENDIMENTO WHERE ID = ?"
+func (cnx *ServiceRepository) GetServiceByID(id int) (*models.Service, error) {
+	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem, sistema, usuario_alteracao, usuario_finalizacao FROM ATENDIMENTO WHERE ID = ?"
 
 	rows, err := cnx.DB.Query(query, id)
 	if err == sql.ErrNoRows {
@@ -63,7 +71,7 @@ func (cnx *ServiceRepository) GetServiceById(id uint) (*models.Service, error) {
 
 	var atendimento models.Service
 	for rows.Next() {
-		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin); err != nil {
+		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin, &atendimento.System, &atendimento.UserAlteration, &atendimento.UserFinished); err != nil {
 			return nil, fmt.Errorf("erro ao scanear atendimento: %v", err)
 		}
 	}
@@ -90,7 +98,7 @@ func (cnx *ServiceRepository) UpdateService(service models.Service) error {
 	return nil
 }
 
-func (cnx *ServiceRepository) DeleteService(id uint) error {
+func (cnx *ServiceRepository) DeleteService(id int) error {
 	query := "DELETE FROM ATENDIMENTO WHERE id = ?"
 
 	result, err := cnx.DB.Exec(query, id)

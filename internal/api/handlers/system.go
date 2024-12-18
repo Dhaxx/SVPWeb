@@ -34,7 +34,7 @@ func (h *SystemHandler) CreateSystem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao cadastrar sistema: "+err.Error(), http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Sistema cadastrado com sucesso!"})
 }
 
@@ -71,7 +71,7 @@ func (h *SystemHandler) GetSystemByID(w http.ResponseWriter, r *http.Request) {
 
 	system, err := h.Repo.GetSystemByID(idInt)
 	if err != nil {
-		http.Error(w, "Erro ao obter sistema com ID"+id+" "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Erro ao obter sistema com ID: "+id+", erro: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
