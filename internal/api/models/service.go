@@ -1,12 +1,15 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Service struct {
 	ID uint `json:"id"`
 	Client uint `json:"client"`
-	StartDate time.Time `json:"startDate"`
-	EndDate time.Time `json:"endDate"`
+	StartDate sql.NullTime `json:"startDate"`
+	EndDate sql.NullTime `json:"endDate"`
 	Requester string `json:"requester"`
 	Tel string `json:"tel"`
 	Email string `json:"email"`
@@ -16,10 +19,10 @@ type Service struct {
 	Obs string `json:"obs"`
 	Finished rune `json:"finished"`
 	User int `json:"user"`
-	Protocol string `json:"protocol"`
+	Protocol sql.NullString `json:"protocol"`
 	System uint `json:"system"`
-	UserAlteration uint `json:"userAlteration"`
-	UserFinished uint `json:"userFinished"`
+	UserAlteration sql.NullInt16 `json:"userAlteration"`
+	UserFinished sql.NullInt16 `json:"userFinished"`
 	Origin uint `json:"origin"`
 }
 

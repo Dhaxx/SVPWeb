@@ -2,6 +2,7 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -22,99 +23,43 @@ func (r *ServiceRepositoryMock) CreateService(service models.Service) error {
 	return nil
 }
 
-// GetAllServices simula a obtenção de todos os serviços
-func (r *ServiceRepositoryMock) GetAllServices() ([]models.Service, error) {
-	return []models.Service{
+func (r *ServiceRepositoryMock) GetFilteredServices(filters map[string]interface{}) ([]models.Service, error) {
+	// Simula alguns serviços para retorno
+	services := []models.Service{
 		{
-			ID:          1,
-			Client:      321,
-			StartDate:   time.Now(),
-			EndDate:     time.Now().Add(48 * time.Hour),
-			Requester:   "Fulaninho",
-			Tel:         "12345678",
-			Email:       "johndoe@example.com",
-			Cell:        "987654321",
-			Initial:     "ERRO AO GERAR FASE 4",
-			Description: "SISTEMA ESTAVA DESATUALIZADO",
-			Obs:         "",
-			Finished:    1,
-			User:        22,
-			Protocol:    "",
-			System:      2,
-			UserAlteration: 0,
-			UserFinished:   0,
-			Origin:         0,
+			ID:         1,
+			Client:     1,
+			Requester:  "Fulano",
+			StartDate:  sql.NullTime{Time: time.Now().Add(-48 * time.Hour), Valid: true},
+			EndDate:    sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
+			Finished:   1,
+			User:       1,
+			Protocol:   sql.NullString{String: "", Valid: false},
+			Initial:    "Descrição 1",
+			Description: "Descrição do atendimento 1",
 		},
 		{
-			ID:          2,
-			Client:      18,
-			StartDate:   time.Now(),
-			EndDate:     time.Now().Add(24 * time.Hour),
-			Requester:   "Ciclano",
-			Tel:         "87654321",
-			Email:       "janedoe@example.com",
-			Cell:        "987654321",
-			Initial:     "DÚVIDA DE LICITAÇÃO",
-			Description: "",
-			Obs:         "",
-			Finished:    1,
-			User:        22,
-			Protocol:    "",
-			System:      2,
-			UserAlteration: 0,
-			UserFinished:   0,
-			Origin:         0,
+			ID:         2,
+			Client:     2,
+			Requester:  "Solicitante 2",
+			StartDate:  sql.NullTime{Time: time.Now().Add(-72 * time.Hour), Valid: true},
+			EndDate:    sql.NullTime{Time: time.Now().Add(72 * time.Hour), Valid: true},
+			Finished:   0,
+			User:       2,
+			Protocol:   sql.NullString{String: "Protocol 2", Valid: true},
+			Initial:    "Descrição 2",
+			Description: "Descrição do atendimento 2",
 		},
-	}, nil
-}
+	}
 
-// GetServiceByID simula a obtenção de um serviço pelo ID
-func (r *ServiceRepositoryMock) GetServiceByID(id int) (*models.Service, error) {
-	if id == 1 {
-		return &models.Service{
-			ID:          1,
-			Client:      321,
-			StartDate:   time.Now(),
-			EndDate:     time.Now().Add(48 * time.Hour),
-			Requester:   "Fulaninho",
-			Tel:         "12345678",
-			Email:       "johndoe@example.com",
-			Cell:        "987654321",
-			Initial:     "ERRO AO GERAR FASE 4",
-			Description: "SISTEMA ESTAVA DESATUALIZADO",
-			Obs:         "",
-			Finished:    1,
-			User:        22,
-			Protocol:    "",
-			System:      2,
-			UserAlteration: 0,
-			UserFinished:   0,
-			Origin:         0,
-		}, nil
+	// Simula o filtro e retorna os serviços correspondentes
+	var filteredServices []models.Service
+	for _, service := range services {
+		if v, ok := filters["solicitante"]; ok && service.Requester == v {
+			filteredServices = append(filteredServices, service)
+		}
 	}
-	if id == 2 {
-		return &models.Service{
-			ID:          2,
-			Client:      18,
-			StartDate:   time.Now(),
-			EndDate:     time.Now().Add(24 * time.Hour),
-			Requester:   "Ciclano",
-			Tel:         "87654321",
-			Email:       "janedoe@example.com",
-			Cell:        "987654321",
-			Initial:     "DÚVIDA DE LICITAÇÃO",
-			Description: "",
-			Obs:         "",
-			Finished:    1,
-			User:        22,
-			Protocol:    "",
-			System:      2,
-			UserAlteration: 0,
-			UserFinished:   0,
-			Origin:         0,
-		}, nil
-	}
-	return nil, fmt.Errorf("serviço com ID %d não encontrado", id)
+	return filteredServices, nil
 }
 
 // UpdateService simula a atualização de um serviço

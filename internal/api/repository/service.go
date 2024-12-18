@@ -9,8 +9,7 @@ import (
 
 type ServiceRepositoryInterface interface {
 	CreateService(models.Service) error
-	GetAllServices() ([]models.Service, error)
-	GetServiceByID(int) (*models.Service, error)
+	GetFilteredServices(map[string]interface{}) ([]models.Service, error)
 	UpdateService(models.Service) error
 	DeleteService(int) error
 }
@@ -34,48 +33,76 @@ func (cnx *ServiceRepository) CreateService(service models.Service) error {
 	return nil
 }
 
-func (cnx *ServiceRepository)GetAllServices() ([]models.Service, error) {
-	/*2 -- fiorilli
-	0 -- em andamento
-	1 -- finalizado*/
-	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem, sistema, usuario_alteracao, usuario_finalizacao FROM ATENDIMENTO"
+func (cnx *ServiceRepository) GetFilteredServices(filters map[string]interface{}) ([]models.Service, error) {
+	query := `SELECT
+	A.id,
+	A.cliente,
+	A.dtinicio,
+	A.dtfim,
+	A.solicitante,
+	A.finalizado,
+	A.usuario,
+	A.protocolo,
+	A.inicial,
+	A.desc_suporte,
+	A.telefone,
+	A.email,
+	A.origem,
+	A.sistema,
+	A.usuario_alteracao,
+	A.usuario_finalizacao
+FROM
+	ATENDIMENTO A
+JOIN CLIENTE B ON
+	A.CLIENTE = B.ID
+WHERE
+	1 = 1`
+	args := []interface{}{}
 
-	rows, err := cnx.DB.Query(query)
+	if v, ok := filters["id"]; ok {
+		query += " AND id = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["entidade"]; ok {
+		query += " AND entidade = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["cidade"]; ok {
+		query += " AND cidade containing ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["cliente"]; ok {
+		query += " AND cliente = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["solicitante"]; ok {
+		query += " AND solicitante = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["descricao"]; ok {
+		query += " AND inicial = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["usuario"]; ok {
+		query += " AND usuario = ?"
+		args = append(args, v)
+	}
+
+	rows, err := cnx.DB.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao consultar todos atendimentos: %v", err)
+		return nil, fmt.Errorf("erro ao executar query: %v", err)
 	}
 	defer rows.Close()
 
-	var atendimentos []models.Service
+	var allAtendimentos []models.Service
 	for rows.Next() {
 		var atendimento models.Service
 		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin, &atendimento.System, &atendimento.UserAlteration, &atendimento.UserFinished); err != nil {
-			return nil, fmt.Errorf("erro ao scanear atendimentos: %v", err)
-		}
-		atendimentos = append(atendimentos, atendimento)
-	}
-	return atendimentos, nil
-}
-
-func (cnx *ServiceRepository) GetServiceByID(id int) (*models.Service, error) {
-	query := "SELECT id, cliente, dtinicio, dtfim, solicitante, finalizado, usuario, protocolo, inicial, desc_suporte, telefone, email, origem, sistema, usuario_alteracao, usuario_finalizacao FROM ATENDIMENTO WHERE ID = ?"
-
-	rows, err := cnx.DB.Query(query, id)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("erro ao localizar atendimento com ID: %d", id)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("erro ao obter atendimento: %v", err)
-	}
-	defer rows.Close()
-
-	var atendimento models.Service
-	for rows.Next() {
-		if err := rows.Scan(&atendimento.ID, &atendimento.Client, &atendimento.StartDate, &atendimento.EndDate, &atendimento.Requester, &atendimento.Finished, &atendimento.User, &atendimento.Protocol, &atendimento.Initial, &atendimento.Description, &atendimento.Tel, &atendimento.Email, &atendimento.Origin, &atendimento.System, &atendimento.UserAlteration, &atendimento.UserFinished); err != nil {
 			return nil, fmt.Errorf("erro ao scanear atendimento: %v", err)
 		}
+		allAtendimentos = append(allAtendimentos, atendimento)
 	}
-	return &atendimento, nil
+	return allAtendimentos, nil
 }
 
 func (cnx *ServiceRepository) UpdateService(service models.Service) error {

@@ -7,6 +7,14 @@ import (
 	"fmt"
 )
 
+type ClientRepositoryInterface interface {
+	CreateClient(models.Client) error
+	GetAllClients() ([]models.Client, error)
+	GetClientByID(uint) (*models.Client, error)
+	UpdateClient(models.Client) error
+	DeleteClient(uint) error
+}
+
 type ClientRepository struct {
 	DB *sql.DB
 }
@@ -45,7 +53,7 @@ func (cnx *ClientRepository) GetAllClients() ([]models.Client, error) {
 	return clientes, nil
 }
 
-func (cnx *ClientRepository) GetClientById(id uint) (*models.Client, error) {
+func (cnx *ClientRepository) GetClientByID(id uint) (*models.Client, error) {
 	query := "SELECT id, entidade, cidade, uf, telefone, email FROM CLIENTE WHERE ID = ?"
 
 	rows, err := cnx.DB.Query(query, id)
@@ -86,10 +94,10 @@ func (cnx *ClientRepository) UpdateClient(client models.Client) error {
 	return nil
 }
 
-func (cnx *ClientRepository) DeleteClient(client models.Client) error {
+func (cnx *ClientRepository) DeleteClient(ID uint) error {
 	query := "DELETE FROM CLIENTE WHERE ID = ?"
 
-	result, err := cnx.DB.Exec(query, client.ID)
+	result, err := cnx.DB.Exec(query, ID)
 	if err != nil {
 		return fmt.Errorf("erro ao deletar cliente: %v", err)
 	}
@@ -100,7 +108,7 @@ func (cnx *ClientRepository) DeleteClient(client models.Client) error {
 	}
 
 	if affectedRows == 0 {
-		return fmt.Errorf("nenhum cliente com id: %d encontrado", client.ID)
+		return fmt.Errorf("nenhum cliente com id: %d encontrado", ID)
 	}
 
 	return nil

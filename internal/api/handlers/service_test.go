@@ -2,11 +2,14 @@ package handlers_test
 
 import (
 	"SVPWeb/internal/api/handlers"
+	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/api/repository"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"context"
 
@@ -55,51 +58,51 @@ func TestCreateService(t *testing.T) {
 	}
 }
 
-func TestGetAllServices(t *testing.T) {
-	mockRepo := &repository.ServiceRepositoryMock{}
-
-	handler := &handlers.ServiceHandler{
-		Repo: mockRepo,
-	}
-
-	req := httptest.NewRequest(http.MethodGet, "/atendimentos/all", nil)
-	rr := httptest.NewRecorder()
-
-	handler.GetAllServices(rr, req)
-	
-	if rr.Code != http.StatusOK {
-		t.Errorf("esperado: %d, obtido: %d", http.StatusCreated, rr.Code)	
-	}
-
-	expectedBody := `[{ "Client": 321, "StartDate": time.Now(), "EndDate": time.Now().Add(48 * time.Hour), "Requester": "Fulaninho", "Tel": "12345678", "Email": "johndoe@example.com", "Cell": "987654321", "Initial": "ERRO AO GERAR FASE 4", "Description": "SISTEMA ESTAVA DESATUALIZADO", "Obs": "", "Finished": 1, "User": 22, "Protocol": "", "System": 2, "UserAlteration": 0, "UserFinished": 0, "Origin": 0}]`
-	if rr.Body.String() != expectedBody {
-		t.Errorf("esperado: %s, obtido: %s", expectedBody, rr.Body.String())
-	}
-}
-
-func TestGetServiceByID(t *testing.T) {
+func TestGetFilteredServices(t *testing.T) {
 	mockRepo := &repository.ServiceRepositoryMock{}
 	handler := &handlers.ServiceHandler{
 		Repo: mockRepo,
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/atendimentos/1", nil)
+	// Cria um filtro de exemplo
+	filters := map[string]interface{}{"solicitante": "Solicitante 1"}
+	filteredServices := []models.Service{
+		{
+			ID:         1,
+			Client:     1,
+			Requester:  "Solicitante 1",
+			StartDate:  sql.NullTime{Time: time.Now().Add(-48 * time.Hour), Valid: true},
+			EndDate:    sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
+			Finished:   1,
+			User:       1,
+			Protocol:   sql.NullString{String: "", Valid: false},
+			Initial:    "Descrição 1",
+			Description: "Descrição do atendimento 1",
+		},
+	}
+
+	// Mock para simular o retorno do repositório
+	handler.GetFilteredServices()
+	mockRepo.GetFilteredServicesFunc = func(filters map[string]interface{}) ([]models.Service, error) {
+		return filteredServices, nil
+	}
+
+	// Cria uma solicitação HTTP
+	req := httptest.NewRequest(http.MethodGet, "/services?solicitante=Solicitante+1", nil)
 	rr := httptest.NewRecorder()
 
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("id", "1")
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	// Chama o handler
+	handler.GetFilteredServices(rr, req)
 
-	handler.GetServiceByID(rr, req)
+	// Verifica se a resposta tem o status 200 OK
+	assert.Equal(t, http.StatusOK, rr.Code)
 
-	if rr.Code != http.StatusOK {
-		t.Errorf("esperado: %d, obtido: %d", http.StatusOK, rr.Code)
-	}
-
-	expectedBody := `{"Client": 321, "StartDate": time.Now(), "EndDate": time.Now().Add(48 * time.Hour), "Requester": "Fulaninho", "Tel": "12345678", "Email": "johndoe@example.com", "Cell": "987654321", "Initial": "ERRO AO GERAR FASE 4", "Description": "SISTEMA ESTAVA DESATUALIZADO", "Obs": "", "Finished": 1, "User": 22, "Protocol": "", "System": 2, "UserAlteration": 0, "UserFinished": 0, "Origin": 0}`
-	if rr.Body.String() != expectedBody {
-		t.Errorf("esperado: %s, obtido: %s", expectedBody, rr.Body.String())
-	}
+	// Verifica o conteúdo da resposta
+	var response []models.Service
+	err := json.NewDecoder(rr.Body).Decode(&response)
+	assert.NoError(t, err)
+	assert.Equal(t, len(response), 1)
+	assert.Equal(t, response[0].Requester, "Solicitante 1")
 }
 
 func TestUpdateService(t *testing.T) {

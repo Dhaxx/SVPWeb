@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
-)
+	"github.com/go-chi/chi/v5")
 
 type ServiceHandler struct {
 	Repo repository.ServiceRepositoryInterface
@@ -39,53 +38,28 @@ func (h *ServiceHandler) CreateService(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Atendimento registrado com sucesso!"})
 }
 
-func (h *ServiceHandler) GetAllServices(w http.ResponseWriter, r *http.Request) {
+func (h *ServiceHandler) GetFilteredServices(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "Método Inválido!", http.StatusMethodNotAllowed)
+		http.Error(w, "Método Inválido!", http.StatusInternalServerError)
 		return
 	}
 
-	var allServices []models.Service
-	allServices, err := h.Repo.GetAllServices()
+	filters := r.URL.Query()
+	filterMap := make(map[string]interface{})
+	for key, values := range filters {
+		if len(values) > 0 {
+			filterMap[key] = values[0]
+		}
+	}
+	
+	services, err := h.Repo.GetFilteredServices(filterMap)
 	if err != nil {
-		http.Error(w, "Erro ao obter lista de atendimentos: "+err.Error(), http.StatusInternalServerError)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(allServices); err != nil {
-		http.Error(w, "Erro ao codificar lista em JSON: "+err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h* ServiceHandler) GetServiceByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Método Inválido", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := chi.URLParam(r, "id")
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		http.Error(w, "Erro ao converter ID: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if idInt == 0 {
-		http.Error(w, "ID inválido", http.StatusBadRequest)
-		return
-	}
-
-	service, err := h.Repo.GetServiceByID(idInt)
-	if err != nil {
-		http.Error(w, "Error ao obter usuário com ID: "+id+" "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Erro ao buscar atendimentos: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err = json.NewEncoder(w).Encode(service); err != nil {
-		http.Error(w, "Erro ao codificar serviço: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	json.NewEncoder(w).Encode(services)
 }
 
 func (h *ServiceHandler) UpdateSystem(w http.ResponseWriter, r *http.Request) {
