@@ -2,18 +2,18 @@ package database
 
 import (
 	"database/sql"
-	"path/filepath"
 	"fmt"
-	"os"
-	"sync"
 	"log"
+	"os"
+	"path/filepath"
+	"sync"
 
 	"github.com/joho/godotenv"
 	_ "github.com/nakagami/firebirdsql"
 )
 
 var (
-	db *sql.DB
+	db   *sql.DB
 	once sync.Once
 )
 
@@ -35,6 +35,7 @@ func connect() (*sql.DB, error) {
 	}
 
 	rootPath := filepath.Join(currentDir, "..") // Sobe um diretório
+	// envPath := filepath.Join(rootPath, ".env")
 	envPath := filepath.Join(rootPath, "\\SVPWEB\\.env")
 
 	if err := godotenv.Load(envPath); err != nil {

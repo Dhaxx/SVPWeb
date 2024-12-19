@@ -3,7 +3,7 @@ package repository
 import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/database"
-	"SVPWeb/internal/auth"
+	"SVPWeb/internal/service"
 	"database/sql"
 	"fmt"
 )
@@ -26,8 +26,8 @@ func NewUserRepository(*sql.DB) *UserRepository {
 
 func (cnx *UserRepository) CreateUser(user models.User) error {
 	query := "INSERT INTO USUARIO (nome, senha, ativo, sistema, aviso, multi, controle, senhamd5) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-	salt := auth.GenerateSalt()
-	hashedPass := auth.HashMD5WithSalt(user.Password, salt)
+	salt := service.GenerateSalt()
+	hashedPass := service.HashMD5WithSalt(user.Password, salt)
 	_, err := cnx.DB.Exec(query, user.Name, hashedPass, user.Active, user.System, user.Notice, user.Multi, user.Control, salt)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir usuário: %v", err)

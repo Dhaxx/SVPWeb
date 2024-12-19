@@ -20,12 +20,16 @@ func main() {
     systemRepo := repository.NewSystemRepository(db)
     serviceRepo := repository.NewServiceRepository(db)
     clientRepo := repository.NewClientRepository(db)
+    imageRepo := repository.NewImageRepository(db)
+    noticeRepo := repository.NewNoticeRepository(db)
 
     // Inicializa o handler
     userHandler := handlers.NewUserHandler(userRepo)
     systemHandler := handlers.NewSystemHandler(systemRepo)
     serviceHandler := handlers.NewServiceHandler(serviceRepo)
     clientHandler := handlers.NewClientHandler(clientRepo)
+    imageHandler := handlers.NewImageHandler(imageRepo)
+    noticeHandler := handlers.NewNoticeRepository(noticeRepo)
 
     // Cria o roteador
     r := chi.NewRouter()
@@ -33,10 +37,13 @@ func main() {
 
     // Define as rotas
     r.Route("/SVPWeb", func(r chi.Router) {
+        // GET
         r.Get("/colaboradores", userHandler.GetAllUser)
         r.Get("/sistemas", systemHandler.GetAllSystems)
         r.Get("/atendimentos", serviceHandler.GetFilteredServices)
         r.Get("/clientes", clientHandler.GetFilteredClients)
+        r.Get("/image/{id}", imageHandler.GetImageByID)
+        r.Get("/notice", noticeHandler.GetAllNotices)
     })
 
     // Inicia o servidor

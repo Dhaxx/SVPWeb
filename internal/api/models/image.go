@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Image struct {
 	ID          uint      `json:"id"`
@@ -10,5 +13,5 @@ type Image struct {
 	User        uint      `json:"user"`
 	Description string    `json:"description"`
 	Date        time.Time `json:"date"`
-	Notice      uint      `json:"notice"`
+	Notice      sql.NullInt16 `json:"notice"`
 }

@@ -7,6 +7,14 @@ import (
 	"fmt"
 )
 
+type NoticeRepositoryInterface interface {
+	CreateNotice(models.Notice) error 
+	GetAllNotices() ([]models.Notice, error)
+	GetNoticeByID(uint) (*models.Notice, error)
+	UpdateNotice(models.Notice) error
+	DeleteNotice(uint) error
+}
+
 type NoticeRepository struct {
 	DB *sql.DB
 }
@@ -46,7 +54,7 @@ func (cnx *NoticeRepository) GetAllNotices() ([]models.Notice, error) {
 	return avisos, nil
 }
 
-func (cnx *NoticeRepository) GetNoticeById(id uint) (*models.Notice, error) {
+func (cnx *NoticeRepository) GetNoticeByID(id uint) (*models.Notice, error) {
 	query := "SELECT id, titulo, sistema, usuario, data, tipo, caminho FROM AVISOS WHERE ID = ?"
 
 	rows, err := cnx.DB.Query(query)
