@@ -36,7 +36,7 @@ func main() {
         r.Get("/colaboradores", userHandler.GetAllUser)
         r.Get("/sistemas", systemHandler.GetAllSystems)
         r.Get("/atendimentos", serviceHandler.GetFilteredServices)
-        r.Get("/clientes", clientHandler.GetAllClients)
+        r.Get("/clientes", clientHandler.GetFilteredClients)
     })
 
     // Inicia o servidor

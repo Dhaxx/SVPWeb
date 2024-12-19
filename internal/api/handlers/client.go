@@ -39,55 +39,28 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Cliente criado com sucesso!"})
 }
 
-func (h *ClientHandler) GetAllClients(w http.ResponseWriter, r *http.Request) {
+func (h *ClientHandler) GetFilteredClients(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Método Inválido!",http.StatusMethodNotAllowed)
 		return
 	}
 
-	var allClients []models.Client
-	allClients, err := h.Repo.GetAllClients()
-	if err != nil {
-		http.Error(w, "Erro ao retornar todos os clientes: "+err.Error(), http.StatusInternalServerError)
-		return
+	filters := r.URL.Query()
+	filterMap := make(map[string]interface{})
+	for key, value := range(filters) {
+		if len(value) > 0 {
+			filterMap[key] = value[0]
+		}
 	}
+
+	clients, err := h.Repo.GetFilteredClients(filterMap)
+	if err != nil {
+		http.Error(w, "Erro ao obter listagem de clientes: "+err.Error(), http.StatusInternalServerError)
+		return
+	}	
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(allClients); err != nil {
-		http.Error(w, "Erro ao codificar lista de clientes em JSON: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (h *ClientHandler) GetClientByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Método Inválido!",http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := chi.URLParam(r, "id")
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		http.Error(w, "Erro ao converter ID: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if idInt == 0 {
-		http.Error(w, "ID inválido: "+id, http.StatusBadRequest)
-		return
-	}
-
-	client, err := h.Repo.GetClientByID(uint(idInt))
-	if err != nil {
-		http.Error(w, "Erro ao obter cliente com id: "+id+", erro: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(client); err != nil {
-		http.Error(w, "Erro ao codificar registro de cliente em JSON: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	json.NewEncoder(w).Encode(clients)
 }
 
 func (h *ClientHandler) UpdateClient(w http.ResponseWriter, r *http.Request) {

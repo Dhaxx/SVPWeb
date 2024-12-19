@@ -5,6 +5,7 @@ import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/api/repository"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"context"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateService(t *testing.T) {
@@ -64,8 +66,6 @@ func TestGetFilteredServices(t *testing.T) {
 		Repo: mockRepo,
 	}
 
-	// Cria um filtro de exemplo
-	filters := map[string]interface{}{"solicitante": "Solicitante 1"}
 	filteredServices := []models.Service{
 		{
 			ID:         1,
@@ -81,8 +81,7 @@ func TestGetFilteredServices(t *testing.T) {
 		},
 	}
 
-	// Mock para simular o retorno do repositório
-	handler.GetFilteredServices()
+	// Mock do retorno do repositório
 	mockRepo.GetFilteredServicesFunc = func(filters map[string]interface{}) ([]models.Service, error) {
 		return filteredServices, nil
 	}

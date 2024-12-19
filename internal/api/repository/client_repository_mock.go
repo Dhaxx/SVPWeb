@@ -6,7 +6,9 @@ import (
 )
 
 // ClientRepositoryMock simula a implementação de ClientRepository para testes
-type ClientRepositoryMock struct{}
+type ClientRepositoryMock struct{
+    GetFilteredClientsFunc func(filters map[string]interface{}) ([]models.Client, error)
+}
 
 // CreateClient simula a criação de um cliente
 func (r *ClientRepositoryMock) CreateClient(client models.Client) error {
@@ -16,20 +18,11 @@ func (r *ClientRepositoryMock) CreateClient(client models.Client) error {
     return nil
 }
 
-// GetAllClients simula a obtenção de todos os clientes
-func (r *ClientRepositoryMock) GetAllClients() ([]models.Client, error) {
-    return []models.Client{
-        {ID: 1, Entity: "PREFEITURA DE LOS SANTOS", City: "LOS SANTOS", Uf: "SP", Tel: "12345678", Email: "empresaA@example.com"},
-        {ID: 2, Entity: "CÂMARA MUNICIPAL DE GOTHAM CITY", City: "GOTHAM", Uf: "MG", Tel: "87654321", Email: "empresaB@example.com"},
-    }, nil
-}
-
-// GetClientById simula a obtenção de um cliente pelo ID
-func (r *ClientRepositoryMock) GetClientByID(id uint) (*models.Client, error) {
-    if id == 1 {
-        return &models.Client{ID: 1, Entity: "PREFEITURA DE LOS SANTOS", City: "LOS SANTOS", Uf: "SP A", Tel: "12345678", Email: "empresaA@example.com"}, nil
-    }
-    return nil, fmt.Errorf("cliente com ID %d não encontrado", id)
+func (r *ClientRepositoryMock) GetFilteredClients(filters map[string]interface{}) ([]models.Client, error) {
+	if r.GetFilteredClientsFunc != nil {
+		return r.GetFilteredClientsFunc(filters)
+	}
+	return nil, fmt.Errorf("GetFilteredClientsFunc not implemented")
 }
 
 // UpdateClient simula a atualização de um cliente

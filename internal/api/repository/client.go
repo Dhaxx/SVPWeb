@@ -9,8 +9,7 @@ import (
 
 type ClientRepositoryInterface interface {
 	CreateClient(models.Client) error
-	GetAllClients() ([]models.Client, error)
-	GetClientByID(uint) (*models.Client, error)
+	GetFilteredClients(map[string]interface{}) ([]models.Client, error)
 	UpdateClient(models.Client) error
 	DeleteClient(uint) error
 }
@@ -33,45 +32,59 @@ func (cnx *ClientRepository) CreateClient(client models.Client) error {
 	return nil
 }
 
-func (cnx *ClientRepository) GetAllClients() ([]models.Client, error) {
-	query := "SELECT id, entidade, cidade, uf, telefone, email FROM CLIENTE"
+func (cnx *ClientRepository) GetFilteredClients(filters map[string]interface{}) ([]models.Client, error) {
+	query := `SELECT
+	id,
+	entidade,
+	cidade,
+	uf,
+	telefone,
+	email
+FROM
+	CLIENTE
+WHERE 1 = 1`
+	args := []interface{}{}
 
-	rows, err := cnx.DB.Query(query)
+	if v, ok := filters["id"]; ok {
+		query += " AND id = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["entidade"]; ok {
+		query += " AND entidade containing ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["cidade"]; ok {
+		query += " AND cidade containing ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["uf"]; ok {
+		query += " AND uf containing ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["telefone"]; ok {
+		query += " AND telefone containing ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["email"]; ok {
+		query += " AND email containing ?"
+		args = append(args, v)
+	}
+
+	rows, err := cnx.DB.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao obter todos os clientes: %v", err)
+		return nil, fmt.Errorf("erro ao obter lista de clientes: %v", err.Error())
 	}
 	defer rows.Close()
 
-	var clientes []models.Client
+	var allClients []models.Client
 	for rows.Next() {
 		var client models.Client
 		if err := rows.Scan(&client.ID, &client.Entity, &client.City, &client.Uf, &client.Tel, &client.Email); err != nil {
-			return nil, fmt.Errorf("erro ao scanear valores: %v", err)
+			return nil, fmt.Errorf("erro ao scanear clientes: %v", err)
 		}
-		clientes = append(clientes, client)
+		allClients = append(allClients, client)
 	}
-	return clientes, nil
-}
-
-func (cnx *ClientRepository) GetClientByID(id uint) (*models.Client, error) {
-	query := "SELECT id, entidade, cidade, uf, telefone, email FROM CLIENTE WHERE ID = ?"
-
-	rows, err := cnx.DB.Query(query, id)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("erro ao localizar cliente com ID: %d", id)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("erro ao buscar cliente: %v", err)
-	}
-	defer rows.Close()
-
-	var cliente models.Client
-	for rows.Next() {
-		if err := rows.Scan(&cliente.ID, &cliente.Entity, &cliente.City, &cliente.Uf, &cliente.Tel, &cliente.Email); err != nil {
-			return nil, fmt.Errorf("erro ao scanear valores: %v", err)
-		}
-	}
-	return &cliente, nil
+	return allClients, nil
 }
 
 func (cnx *ClientRepository) UpdateClient(client models.Client) error {

@@ -1,18 +1,19 @@
 package handlers_test
 
 import (
-    "SVPWeb/internal/api/handlers"
-    "SVPWeb/internal/api/models"
-    "SVPWeb/internal/api/repository"
-    "bytes"
-    "encoding/json"
-    "net/http"
-    "net/http/httptest"
-    "testing"
+	"SVPWeb/internal/api/handlers"
+	"SVPWeb/internal/api/models"
+	"SVPWeb/internal/api/repository"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 
-    "context"
+	"context"
 
-    "github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateClient(t *testing.T) {
@@ -50,52 +51,44 @@ func TestCreateClient(t *testing.T) {
     }
 }
 
-func TestGetAllClients(t *testing.T) {
-    mockRepo := &repository.ClientRepositoryMock{}
+func TestGetFilteredClients(t *testing.T) {
+	mockRepo := &repository.ClientRepositoryMock{}
+	handler := &handlers.ClientHandler{
+		Repo: mockRepo,
+	}
 
-    handler := &handlers.ClientHandler{
-        Repo: mockRepo,
-    }
+	filteredClients := []models.Client{
+		{
+			ID:         1,
+            Entity: "CAMARA DE LOS SANTOS",
+            City: "LOS SANTOS",
+            Uf: "CA",
+            Tel: " ",
+            Email: " ",
+		},
+	}
 
-    req := httptest.NewRequest(http.MethodGet, "/clientes", nil)
-    rr := httptest.NewRecorder()
+	// Mock do retorno do repositório
+	mockRepo.GetFilteredClientsFunc = func(filters map[string]interface{}) ([]models.Client, error) {
+		return filteredClients, nil
+	}
 
-    handler.GetAllClients(rr, req)
+	// Cria uma solicitação HTTP
+	req := httptest.NewRequest(http.MethodGet, "/clients?solicitante=Solicitante+1", nil)
+	rr := httptest.NewRecorder()
 
-    if rr.Code != http.StatusOK {
-        t.Errorf("esperado: %d, obtido: %d", http.StatusOK, rr.Code)
-    }
+	// Chama o handler
+	handler.GetFilteredClients(rr, req)
 
-    expectedBody := `[{"ID":1,"Entity":"Empresa A","City":"Cidade A","Uf":"UF A","Tel":"12345678","Email":"empresaA@example.com"},{"ID":2,"Entity":"Empresa B","City":"Cidade B","Uf":"UF B","Tel":"87654321","Email":"empresaB@example.com"}]`
-    if rr.Body.String() != expectedBody {
-        t.Errorf("esperado: %s, obtido: %s", expectedBody, rr.Body.String())
-    }
-}
+	// Verifica se a resposta tem o status 200 OK
+	assert.Equal(t, http.StatusOK, rr.Code)
 
-func TestGetClientByID(t *testing.T) {
-    mockRepo := &repository.ClientRepositoryMock{}
-
-    handler := &handlers.ClientHandler{
-        Repo: mockRepo,
-    }
-
-    req := httptest.NewRequest(http.MethodGet, "/clientes/1", nil)
-    rr := httptest.NewRecorder()
-
-    rctx := chi.NewRouteContext()
-    rctx.URLParams.Add("id", "1")
-    req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-    handler.GetClientByID(rr, req)
-
-    if rr.Code != http.StatusOK {
-        t.Errorf("esperado: %d, obtido: %d", http.StatusOK, rr.Code)
-    }
-
-    expectedBody := `{"ID":1,"Entity":"Empresa A","City":"Cidade A","Uf":"UF A","Tel":"12345678","Email":"empresaA@example.com"}`
-    if rr.Body.String() != expectedBody {
-        t.Errorf("esperado: %s, obtido: %s", expectedBody, rr.Body.String())
-    }
+	// Verifica o conteúdo da resposta
+	var response []models.Service
+	err := json.NewDecoder(rr.Body).Decode(&response)
+	assert.NoError(t, err)
+	assert.Equal(t, len(response), 1)
+	assert.Equal(t, response[0].Requester, "Solicitante 1")
 }
 
 func TestUpdateClient(t *testing.T) {

@@ -38,7 +38,7 @@ func (cnx *ServiceRepository) GetFilteredServices(filters map[string]interface{}
 	A.id,
 	A.cliente,
 	A.dtinicio,
-	A.dtfim,
+	A.dtfim,A
 	A.solicitante,
 	A.finalizado,
 	A.usuario,
@@ -85,6 +85,14 @@ WHERE
 	}
 	if v, ok := filters["usuario"]; ok {
 		query += " AND usuario = ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["dtinicio"]; ok {
+		query += " AND dtinicio >= ?"
+		args = append(args, v)
+	}
+	if v, ok := filters["dtfim"]; ok {
+		query += " AND dtfim <= ?"
 		args = append(args, v)
 	}
 

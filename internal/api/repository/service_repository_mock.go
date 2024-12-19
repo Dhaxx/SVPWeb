@@ -2,13 +2,13 @@ package repository
 
 import (
 	"SVPWeb/internal/api/models"
-	"database/sql"
 	"fmt"
-	"time"
 )
 
 // ServiceRepositoryMock simula a implementação de ServiceRepository para testes
-type ServiceRepositoryMock struct{}
+type ServiceRepositoryMock struct{
+	GetFilteredServicesFunc func(filters map[string]interface{}) ([]models.Service, error)
+}
 
 // CreateService simula a criação de um serviço
 func (r *ServiceRepositoryMock) CreateService(service models.Service) error {
@@ -24,42 +24,10 @@ func (r *ServiceRepositoryMock) CreateService(service models.Service) error {
 }
 
 func (r *ServiceRepositoryMock) GetFilteredServices(filters map[string]interface{}) ([]models.Service, error) {
-	// Simula alguns serviços para retorno
-	services := []models.Service{
-		{
-			ID:         1,
-			Client:     1,
-			Requester:  "Fulano",
-			StartDate:  sql.NullTime{Time: time.Now().Add(-48 * time.Hour), Valid: true},
-			EndDate:    sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
-			Finished:   1,
-			User:       1,
-			Protocol:   sql.NullString{String: "", Valid: false},
-			Initial:    "Descrição 1",
-			Description: "Descrição do atendimento 1",
-		},
-		{
-			ID:         2,
-			Client:     2,
-			Requester:  "Solicitante 2",
-			StartDate:  sql.NullTime{Time: time.Now().Add(-72 * time.Hour), Valid: true},
-			EndDate:    sql.NullTime{Time: time.Now().Add(72 * time.Hour), Valid: true},
-			Finished:   0,
-			User:       2,
-			Protocol:   sql.NullString{String: "Protocol 2", Valid: true},
-			Initial:    "Descrição 2",
-			Description: "Descrição do atendimento 2",
-		},
+	if r.GetFilteredServicesFunc != nil {
+		return r.GetFilteredServicesFunc(filters)
 	}
-
-	// Simula o filtro e retorna os serviços correspondentes
-	var filteredServices []models.Service
-	for _, service := range services {
-		if v, ok := filters["solicitante"]; ok && service.Requester == v {
-			filteredServices = append(filteredServices, service)
-		}
-	}
-	return filteredServices, nil
+	return nil, fmt.Errorf("GetFilteredServicesFunc not implemented")
 }
 
 // UpdateService simula a atualização de um serviço
