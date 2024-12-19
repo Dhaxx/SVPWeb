@@ -4,6 +4,7 @@ import (
 	"SVPWeb/internal/api/handlers"
 	"SVPWeb/internal/api/repository"
 	"SVPWeb/internal/database"
+	"SVPWeb/internal/service"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,16 +36,22 @@ func main() {
     r := chi.NewRouter()
     r.Use(middleware.Logger)
 
+    // Rota de Autenticação
+    r.Post("/SVPWeb/login", userHandler.Login)
+
     // Define as rotas
     r.Route("/SVPWeb", func(r chi.Router) {
-        // GET
-        r.Get("/colaboradores", userHandler.GetAllUser)
-        r.Get("/sistemas", systemHandler.GetAllSystems)
-        r.Get("/atendimentos", serviceHandler.GetFilteredServices)
-        r.Get("/clientes", clientHandler.GetFilteredClients)
-        r.Get("/image/{id}", imageHandler.GetImageByID)
-        r.Get("/notice", noticeHandler.GetAllNotices)
-    })
+		r.Use(service.JWTAuthMiddleware) // Middleware para verificar o token JWT
+
+		// Rotas GET
+		r.Get("/colaboradores", userHandler.GetAllUser)
+		r.Get("/sistemas", systemHandler.GetAllSystems)
+		r.Get("/atendimentos", serviceHandler.GetFilteredServices)
+		r.Get("/clientes", clientHandler.GetFilteredClients)
+		r.Get("/image/{id}", imageHandler.GetImageByID)
+		r.Get("/notice", noticeHandler.GetAllNotices)
+	})
+
 
     // Inicia o servidor
     fmt.Println("Servidor rodando em http://localhost:8080")

@@ -3,7 +3,7 @@ package repository
 import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/database"
-	"SVPWeb/internal/service"
+	"SVPWeb/internal/utils"
 	"database/sql"
 	"fmt"
 )
@@ -14,6 +14,7 @@ type UserRepositoryInterface interface {
 	GetUserByID(id int) (*models.User, error)
 	UpdateUser(user models.User) error
 	DeleteUser(id uint) error
+	GetUserByUsername(username string) (*models.User, error)
 }
 
 type UserRepository struct {
@@ -26,8 +27,8 @@ func NewUserRepository(*sql.DB) *UserRepository {
 
 func (cnx *UserRepository) CreateUser(user models.User) error {
 	query := "INSERT INTO USUARIO (nome, senha, ativo, sistema, aviso, multi, controle, senhamd5) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-	salt := service.GenerateSalt()
-	hashedPass := service.HashMD5WithSalt(user.Password, salt)
+	salt := utils.GenerateSalt()
+	hashedPass := utils.HashMD5WithSalt(user.Password, salt)
 	_, err := cnx.DB.Exec(query, user.Name, hashedPass, user.Active, user.System, user.Notice, user.Multi, user.Control, salt)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir usuário: %v", err)
@@ -112,4 +113,17 @@ func (cnx *UserRepository) DeleteUser(id uint) error {
 	}
 
 	return nil
+}
+
+func (cnx *UserRepository) GetUserByUsername(username string) (*models.User, error) {
+	query := "SELECT id, nome, ativo, sistema, aviso, controle, senha FROM USUARIO WHERE NOME CONTAINING ?"
+
+	row := cnx.DB.QueryRow(query, username)
+
+	var user models.User
+	if err := row.Scan(&user.ID, &user.Name, &user.Active, &user.System, &user.Notice, &user.Control, &user.Password); err != nil {
+		return nil, fmt.Errorf("erro ao buscar usuário: %v", err)
+	}
+
+	return &user, nil
 }

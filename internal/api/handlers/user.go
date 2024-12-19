@@ -3,6 +3,7 @@ package handlers
 import (
 	"SVPWeb/internal/api/models"
 	"SVPWeb/internal/api/repository"
+	"SVPWeb/internal/service"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,6 +18,15 @@ type UserHandler struct {
 
 func NewUserHandler(repo repository.UserRepositoryInterface) *UserHandler {
 	return &UserHandler{Repo: repo}
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string  `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -136,4 +146,32 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Usuário deletado com sucesso!"})
+}
+
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método Inválido!", http.StatusMethodNotAllowed)
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Dados Inválidos", http.StatusBadRequest)
+		return
+	}
+
+	user, err := service.ValidateUserCredentials(req.Username, req.Password)
+	if err != nil {
+		http.Error(w, "Credenciais Inválidas", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := service.GenerateJWT(user)
+	if err != nil {
+		http.Error(w, "Erro ao gerar token", http.StatusInternalServerError)
+		return
+	}
+
+	response := LoginResponse{Token: token}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

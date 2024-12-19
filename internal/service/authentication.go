@@ -1,16 +1,21 @@
 package service
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"SVPWeb/internal/api/models"
+	"SVPWeb/internal/api/repository"
+	"SVPWeb/internal/database"
+	"SVPWeb/internal/utils"
+	"bytes"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/joho/godotenv"
 )
+
+
 
 var secretKey []byte
 
@@ -37,20 +42,38 @@ func init() {
 	}
 
 	fmt.Println("Chave secreta carregada com sucesso!")
-	fmt.Print(secretKey)
 }
 
-func HashMD5WithSalt(password, salt string) string {
-	hash := md5.New()
-	hash.Write([]byte(password + salt))
-	return hex.EncodeToString(hash.Sum(nil))
-  }
-  
-func GenerateSalt() string {
-	// Usar rand.NewSource para gerar uma fonte de aleatoriedade com base no tempo
-	randSource := rand.NewSource(time.Now().UnixNano())
-	random := rand.New(randSource)
+func ValidateUserCredentials(username, password string) (*models.User, error) {
+	userRepo := repository.NewUserRepository(database.GetDB())
+	user, err := userRepo.GetUserByUsername(username)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao obter usuário: %v", err)
+	}
 
-	// Gerar um salt aleatório
-	return fmt.Sprintf("%x", random.Intn(10000)) // Retorna um salt de 4 dígitos
+	passwordHashed := []byte(utils.HashMD5(password))
+	passwordStored := []byte(user.Password)
+
+	if !bytes.Equal(passwordHashed, passwordStored) {
+		return nil, fmt.Errorf("senhas não coincidem: %v", err)
+	}
+
+	return user, nil
+}
+
+func GenerateJWT(user *models.User) (string, error) {
+	claims := jwt.MapClaims{
+		"id": user.ID,
+		"username": user.Name,
+		"exp": time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(secretKey)
+	if err != nil {
+		fmt.Print(err)
+		return "", fmt.Errorf("erro ao assinar string: %v", err)
+	}
+
+	return signedToken, nil
 }

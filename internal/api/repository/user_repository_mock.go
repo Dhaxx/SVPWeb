@@ -52,3 +52,14 @@ func (r *UserRepositoryMock) DeleteUser(id uint) error {
 	}
 	return nil // Simula a exclusão com sucesso
 }
+
+func (m *UserRepositoryMock) GetUserByUsername(username string) (*models.User, error) {
+
+    // mock implementation
+
+    return &models.User{
+
+        Name: username,
+
+    }, nil
+}
