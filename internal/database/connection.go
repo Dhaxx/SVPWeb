@@ -35,8 +35,8 @@ func connect() (*sql.DB, error) {
 	}
 
 	rootPath := filepath.Join(currentDir, "..") // Sobe um diretório
-	envPath := filepath.Join(rootPath, ".env")
-	// envPath := filepath.Join(rootPath, "\\SVPWEB\\.env")
+	// envPath := filepath.Join(rootPath, ".env")
+	envPath := filepath.Join(rootPath, "\\SVPWEB\\.env")
 
 	if err := godotenv.Load(envPath); err != nil {
 		return nil, fmt.Errorf("erro ao carregar .env: %v", err)

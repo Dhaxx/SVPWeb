@@ -11,6 +11,7 @@ import (
 	
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func main() {
@@ -36,12 +37,21 @@ func main() {
     r := chi.NewRouter()
     r.Use(middleware.Logger)
 
+    // Configurar CORS
+    r.Use(cors.New(cors.Options{
+        AllowedOrigins:   []string{"*"},
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+        AllowedHeaders:   []string{"Content-Type", "Authorization", "X-Requested-With"},
+        AllowCredentials: true,
+    }).Handler)
+
     // Rota de Autenticação
     r.Post("/SVPWeb/login", userHandler.Login)
 
     // Define as rotas
     r.Route("/SVPWeb", func(r chi.Router) {
 		r.Use(service.JWTAuthMiddleware) // Middleware para verificar o token JWT
+        r.Use(service.RateLimitingMiddleware)
 
 		// Rotas GET
 		r.Get("/colaboradores", userHandler.GetAllUser)
